@@ -1,0 +1,14 @@
+{
+  "domain": "crafty_controller",
+  "name": "Crafty Controller",
+  "codeowners": [
+    "@soullink9"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/soullink9/HA-Marketplace-Crafty-Controller",
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/soullink9/HA-Marketplace-Crafty-Controller/issues",
+  "requirements": [],
+  "version": "1.2.0"
+}

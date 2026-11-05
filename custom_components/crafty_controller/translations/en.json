@@ -1,0 +1,25 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Crafty Controller",
+        "description": "Enter the address of your Crafty Controller and an API token created in your Crafty user settings.",
+        "data": {
+          "url": "URL (e.g. https://192.168.1.10:8443)",
+          "token": "API token",
+          "verify_ssl": "Verify SSL certificate"
+        },
+        "data_description": {
+          "verify_ssl": "Leave off if Crafty uses its default self-signed certificate."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach Crafty at that address",
+      "invalid_auth": "Crafty rejected the API token"
+    },
+    "abort": {
+      "already_configured": "This Crafty Controller is already configured"
+    }
+  }
+}
