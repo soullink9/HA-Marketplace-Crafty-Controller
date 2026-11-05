@@ -1,6 +1,9 @@
 {
   "domain": "crafty_controller",
   "name": "Crafty Controller",
+  "categories": [
+    "media_entertainment.gaming"
+  ],
   "codeowners": [
     "@soullink9"
   ],
