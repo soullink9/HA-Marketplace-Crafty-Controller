@@ -1,13 +1,13 @@
 """Simulation test for the Crafty Controller integration.
 
-Run:  python3 tests/test_integration.py      (Python 3.12+, no other dependencies)
+Run:  python3 tests/test_integration.py      (Python 3.14, no other dependencies)
 
 The real integration files are loaded and run against a mock Crafty server that
 returns messy data: missing fields, 403s, HTML pages, hangs, servers that are
 removed or added, and failing start/stop actions. It prints PASS/FAIL per check
 and exits non-zero if any check fails.
 
-aiohttp, voluptuous and the Home Assistant base classes are thin stand-ins
+aiohttp, probatio and the Home Assistant base classes are thin stand-ins
 (stubs.py), so this checks the integration's own logic only. It does NOT test
 real Home Assistant, real HTTP/TLS or a real Crafty. Keep the stand-ins in sync
 if the integration starts using more of the Home Assistant API.
@@ -378,6 +378,16 @@ async def main():
             result,
         )
     CRAFTY["list_mode"] = "ok"
+
+    # --- S7b entity ID renamed: every entity opts in to staying in place (Home Assistant 2026.11) ---
+    # The hook has to be the integration's own (defining it is the opt-in), and it has to call Home Assistant's.
+    base_class = importlib.import_module("crafty_controller.entity").CraftyEntity
+    check("S7b the base entity defines async_entity_id_changed", "async_entity_id_changed" in vars(base_class))
+    renamed = []
+    for entity in hass.entities:
+        entity.async_entity_id_changed("switch.old_name")
+        renamed.append(getattr(entity, "entity_id_changes", 0) == 1)
+    check("S7b every entity passes an entity ID rename on to Home Assistant", bool(renamed) and all(renamed), renamed)
 
     # --- S8 unload ---
     for unload in entry._un:

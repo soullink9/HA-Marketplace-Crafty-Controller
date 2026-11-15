@@ -1,12 +1,10 @@
 """Config flow: the one-screen set-up form (Crafty URL, API token, SSL check)."""
 
-from __future__ import annotations
-
 from aiohttp import ClientResponseError
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.const import CONF_TOKEN, CONF_URL, CONF_VERIFY_SSL
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import voluptuous as vol
+import probatio
 
 from .api import request
 from .const import DOMAIN, ERRORS
@@ -53,12 +51,13 @@ class CraftyFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             errors=errors,
-            data_schema=vol.Schema(
+            # Probatio is Home Assistant's validation library; the old `voluptuous` name is only an alias for it.
+            data_schema=probatio.Schema(
                 {
-                    vol.Required(CONF_URL): str,
-                    vol.Required(CONF_TOKEN): str,
+                    probatio.Required(CONF_URL): str,
+                    probatio.Required(CONF_TOKEN): str,
                     # Off by default: Crafty ships with a self-signed certificate.
-                    vol.Required(CONF_VERIFY_SSL, default=False): bool,
+                    probatio.Required(CONF_VERIFY_SSL, default=False): bool,
                 }
             ),
         )

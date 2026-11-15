@@ -1,7 +1,5 @@
 """Base entity shared by the switch and the status sensor, plus a set-up helper."""
 
-from __future__ import annotations
-
 from collections.abc import Callable
 
 from homeassistant.core import callback
@@ -32,6 +30,14 @@ class CraftyEntity(CoordinatorEntity[CraftyCoordinator]):
             identifiers={(DOMAIN, server_id)},
             name=coordinator.data[server_id]["name"],
         )
+
+    @callback
+    def async_entity_id_changed(self, old_entity_id: str) -> None:
+        """Keep the entity in place when its entity ID is renamed, instead of removing and re-adding it.
+
+        Nothing here is keyed on the entity ID, so there is nothing to update; defining this hook opts in to the
+        in-place behaviour Home Assistant 2026.11 introduced (the default for every entity from 2027.11)."""
+        super().async_entity_id_changed(old_entity_id)
 
     @property
     def server(self) -> dict:

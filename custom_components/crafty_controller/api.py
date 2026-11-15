@@ -5,8 +5,6 @@ the config flow (config_flow.py) use it, so timeouts, auth and response checking
 live in a single place.
 """
 
-from __future__ import annotations
-
 from aiohttp import ClientSession
 
 from .const import TIMEOUT

@@ -1,7 +1,5 @@
 """Binary sensor platform: an online/offline status sensor per Crafty server."""
 
-from __future__ import annotations
-
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,

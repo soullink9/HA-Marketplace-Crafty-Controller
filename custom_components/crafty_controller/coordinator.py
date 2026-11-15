@@ -1,7 +1,5 @@
 """Polls Crafty Controller and keeps the latest state of every server."""
 
-from __future__ import annotations
-
 import asyncio
 import logging
 

@@ -1,7 +1,5 @@
 """Switch platform: one on/off switch per Crafty server."""
 
-from __future__ import annotations
-
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError

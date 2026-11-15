@@ -18,7 +18,7 @@ custom_components/crafty_controller/
 ├── translations/     UI strings for the config flow (en.json)
 └── brand/            Icons (icon.png 256 px, icon@2x.png 512 px)
 tests/
-├── stubs.py          Stand-ins for aiohttp, voluptuous and Home Assistant
+├── stubs.py          Stand-ins for aiohttp, probatio and Home Assistant
 ├── test_integration.py  Dependency-free simulation against a mock Crafty server
 ├── test_release.py   The release scripts, publishing against a fake Gitea server
 └── README.md         What each test checks
@@ -59,14 +59,14 @@ python3 tests/test_release.py
 python3 scripts/build_package.py
 ```
 
-The simulation (`test_integration.py`) needs Python 3.12+ and nothing else; Home Assistant 2026.9 itself runs on
-3.14, which is what the workflows use. `test_release.py` checks the release scripts (any change to `scripts/` or the
+The simulation (`test_integration.py`) needs Python 3.14 and nothing else: that's what Home Assistant 2026.11 runs on,
+and what the workflows use. `test_release.py` checks the release scripts (any change to `scripts/` or the
 release workflows), and `build_package.py` builds `dist/crafty_controller.zip` and checks it installs. Gitea's runner
 runs all of these on every push (`.gitea/workflows/test.yml`); on GitHub the same checks run plus Home Assistant's
 `hassfest` and the Marketplace's own checks, which come from GitHub and can only run there.
 [tests/README.md](tests/README.md) lists what each test checks.
 
-The simulation It loads the real integration files against stand-ins for Home Assistant, aiohttp and voluptuous, and a mock Crafty server that returns messy data (missing fields, 403s, HTML pages, hangs, removed and added servers, failed actions) and checks the entities and config flow behave. It exits non-zero if any check fails.
+The simulation loads the real integration files against stand-ins for Home Assistant, aiohttp and probatio, and a mock Crafty server that returns messy data (missing fields, 403s, HTML pages, hangs, removed and added servers, failed actions) and checks the entities and config flow behave. It exits non-zero if any check fails.
 
 It does **not** test real Home Assistant, real HTTP/TLS, or a real Crafty. Always try changes on a real instance too.
 
@@ -108,6 +108,11 @@ exits non-zero if any check fails.
 
 `hacs.json` at the root is the Marketplace's file: the name it lists and the oldest Home Assistant version the
 integration works with. Keep that version in step with the README's requirements.
+
+**Only the latest Home Assistant is supported.** Build against the newest release and its APIs, and don't keep code,
+shims or fallbacks for older versions. When a change relies on something new, raise `homeassistant` in `hacs.json`
+(and the README) to that release: the Marketplace then doesn't offer the new version to anyone on an older Home
+Assistant, and they keep the last one that works for them.
 
 ## Commits
 

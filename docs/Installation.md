@@ -1,11 +1,11 @@
 # Installation
 
-You need Home Assistant 2026.9 or newer and a Crafty Controller 4 that Home Assistant can reach over the network.
+You need Home Assistant 2026.11 or newer and a Crafty Controller 4 that Home Assistant can reach over the network.
 
 ## From the Marketplace
 
-In Home Assistant 2026.11 and newer, open **Settings → Marketplace**, search for **Crafty Controller** and install it, then
-restart Home Assistant. Updates then show up under **Settings → Updates**.
+Open **Settings → Marketplace**, search for **Crafty Controller** and install it. A new install is ready straight away,
+with no restart; updates show up under **Settings → Updates** and ask for a restart once installed.
 
 If it isn't listed yet, add it from its link instead: this repository's address,
 `https://github.com/soullink9/HA-Marketplace-Crafty-Controller`. Adding from a link needs Home Assistant to be connected to GitHub.

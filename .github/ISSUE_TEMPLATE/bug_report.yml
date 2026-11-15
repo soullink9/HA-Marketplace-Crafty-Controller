@@ -7,7 +7,7 @@ body:
     attributes:
       label: Versions
       description: Home Assistant (Settings → About) and this integration ("version" in custom_components/crafty_controller/manifest.json).
-      placeholder: Home Assistant 2026.9.4, Crafty Controller 4.x, integration 1.0.0
+      placeholder: Home Assistant 2026.11.1, Crafty Controller 4.x, integration 1.0.0
     validations:
       required: true
   - type: textarea

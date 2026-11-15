@@ -1,4 +1,4 @@
-"""Stand-ins for aiohttp, voluptuous and the Home Assistant classes Crafty Controller uses.
+"""Stand-ins for aiohttp, probatio and the Home Assistant classes Crafty Controller uses.
 
 Importing this module registers them under the real names and puts custom_components/ on the path, so
 `import crafty_controller` loads the real integration. The aiohttp stand-in makes real plain-HTTP requests, which is
@@ -120,7 +120,7 @@ class _Schema:
         self.schema = schema
 
 
-fake_module("voluptuous", Required=_Required, Schema=_Schema)
+fake_module("probatio", Required=_Required, Schema=_Schema)
 
 
 # ───────────────────────── Home Assistant stand-ins ─────────────────────────
@@ -199,6 +199,9 @@ class CoordinatorEntity(Generic[T]):
 
     def async_write_ha_state(self):
         render(self)
+
+    def async_entity_id_changed(self, old_entity_id):
+        self.entity_id_changes = getattr(self, "entity_id_changes", 0) + 1
 
 
 def render(entity):

@@ -8,8 +8,6 @@ Set-up overview (see CONTRIBUTING.md for the full tour):
     binary_sensor.py online/offline status per server
 """
 
-from __future__ import annotations
-
 from homeassistant.core import HomeAssistant
 
 from .const import PLATFORMS

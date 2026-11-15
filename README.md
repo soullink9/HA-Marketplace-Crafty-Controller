@@ -12,7 +12,7 @@ Note: Built with the assistance of Claude.ai. I’m putting it here now so you d
 
 > Start and stop your Minecraft servers from Home Assistant, and see at a glance which ones are running.
 
-[![Open your Home Assistant instance and open this repository in the Marketplace.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=soullink9&repository=HA-Marketplace-Crafty-Controller&category=integration)
+[![Open your Home Assistant instance and open this repository in the Marketplace.](https://my.home-assistant.io/badges/marketplace_repository.svg)](https://my.home-assistant.io/redirect/marketplace_repository/?owner=soullink9&repository=HA-Marketplace-Crafty-Controller&category=integration)
 
 [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=crafty_controller)
 
@@ -30,13 +30,13 @@ Servers added in Crafty later appear on their own. If one server can't be read, 
 
 ## Requirements
 
-- Home Assistant 2026.9 or newer
+- Home Assistant 2026.11 or newer. Only the latest release is supported, and older versions are not offered this integration
 - Crafty Controller 4 (API v2), reachable from Home Assistant
 - A Crafty API token (see [Configuration](docs/Configuration.md))
 
 ## Install
 
-Install **Crafty Controller** from the Marketplace (**Settings → Marketplace**, Home Assistant 2026.11 and newer), or copy the [`custom_components/crafty_controller`](custom_components/crafty_controller) folder into `/config/custom_components/`, then restart Home Assistant.
+Install **Crafty Controller** from the Marketplace (**Settings → Marketplace**); no restart is needed. Or copy the [`custom_components/crafty_controller`](custom_components/crafty_controller) folder into `/config/custom_components/` and restart Home Assistant.
 
 Then go to **Settings → Devices & services → Add integration → Crafty Controller** and enter your Crafty URL (for example `https://192.168.1.10:8443`) and API token. Full steps are in the [Installation](docs/Installation.md) page.
 

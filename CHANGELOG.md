@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 (2026-11-15)
+
+### Home Assistant 2026.11 or newer only
+
+- Needs Home Assistant 2026.11 or newer (it was 2026.9). Only the latest Home Assistant is supported from now on, so
+  the Marketplace doesn't offer this version to older installations; they keep 1.2.0.
+- The entities stay in place when their entity ID is renamed, instead of being removed and added again (the new
+  behaviour in Home Assistant 2026.11).
+- The set-up form uses Probatio, Home Assistant's validation library, directly instead of the old `voluptuous` name.
+- Dropped `from __future__ import annotations`, which Python 3.14 no longer needs.
+- The README's Marketplace button opens the Marketplace link (`marketplace_repository`) instead of the HACS one, and
+  the docs say a new install from the Marketplace needs no restart.
 
 ### Repository
 

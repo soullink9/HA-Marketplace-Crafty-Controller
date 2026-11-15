@@ -1,7 +1,5 @@
 """Constants shared across the Crafty Controller integration."""
 
-from __future__ import annotations
-
 from datetime import timedelta
 
 from aiohttp import ClientError, ClientTimeout
