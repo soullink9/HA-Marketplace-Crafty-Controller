@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.4.0 (2026-11-22)
+
+Hardening after a security review.
+
+### Set-up
+
+- **Verify SSL certificate is now on by default** for new set-ups, so the API token only goes to a Crafty whose
+  certificate Home Assistant trusts. Turn it off for Crafty's own self-signed certificate; the form now explains what
+  that means. Existing set-ups keep their setting.
+- **Reconfigure:** change the URL or the SSL setting from **⋮ → Reconfigure**, without removing the integration.
+- **Reauthenticate:** when Crafty rejects the token, Home Assistant asks for a new one instead of leaving everything
+  unavailable.
+
+### Talking to Crafty
+
+- Redirects are no longer followed, so the token only ever goes to the address that was set up. A redirect shows as
+  "Cannot reach Crafty"; enter the address it points to.
+- Every reply is checked before use: at most 1 MiB, the server list must be a list (at most 200 servers), and each
+  field's type is checked (an odd name, port or state falls back to a safe value instead of reaching an entity).
+- Server IDs that aren't valid Crafty IDs are skipped, and IDs are percent-encoded in every request.
+- At most four stats requests run at once, instead of one per server all together.
+- After a start or stop the integration refreshes from Crafty straight away. The switch shows the requested state
+  until Crafty reports it (at most a minute), without changing the polled data.
+
+### Repository
+
+- Every GitHub action is pinned to a commit, the Gitea jobs' image to a digest, and `ruff` to a version.
+- Workflows are read-only by default; only the job that publishes a release may write. The Gitea checkout no longer
+  puts the token on git's command line, and GitHub's checkouts don't keep theirs.
+
 ## 1.3.0 (2026-11-15)
 
 ### Home Assistant 2026.11 or newer only

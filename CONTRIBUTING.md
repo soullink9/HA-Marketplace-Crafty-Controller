@@ -7,13 +7,13 @@ Thanks for helping out. This file is the map for anyone taking over the code.
 ```
 custom_components/crafty_controller/
 ├── __init__.py       Set-up/unload: creates the coordinator, forwards to the platforms
-├── const.py          DOMAIN, PLATFORMS, poll interval, request timeout, the ERRORS tuple
-├── api.py            The one function that calls Crafty (auth, timeout, response checks)
+├── const.py          DOMAIN, PLATFORMS, poll interval, request timeout, limits, the ERRORS tuple
+├── api.py            The one function that calls Crafty (auth, timeout, response checks), server ID checks
 ├── coordinator.py    Polls Crafty every 30 s and holds the data for all servers
 ├── entity.py         Base entity (device, unique ID, availability) + entity creation helper
 ├── switch.py         On/off switch per server (start_server / stop_server)
 ├── binary_sensor.py  Online/offline status sensor per server
-├── config_flow.py    Set-up form: URL, API token, SSL check
+├── config_flow.py    Set-up form (URL, API token, SSL check), reconfigure and reauth
 ├── manifest.json     Integration metadata (bump "version" on every release)
 ├── translations/     UI strings for the config flow (en.json)
 └── brand/            Icons (icon.png 256 px, icon@2x.png 512 px)
@@ -29,10 +29,18 @@ scripts/              The release helpers both release workflows use (see Releas
 
 ## How data flows
 
-1. `CraftyCoordinator` calls `GET /servers`, then `GET /servers/{id}/stats` for each server in parallel.
-2. `_parse_server()` boils each reply down to `{name, port, running, online}`, stored in `coordinator.data[server_id]`.
+1. `CraftyCoordinator` calls `GET /servers`, then `GET /servers/{id}/stats` for each server, at most four at a time.
+   A server whose ID isn't a valid Crafty ID (`SERVER_ID_PATTERN`) is skipped; IDs are percent-encoded in every path
+   (`api.server_path`). A 401/403 on the list raises `ConfigEntryAuthFailed`, which starts the reauth flow.
+2. `_parse_server()` boils each reply down to `{name, port, running, online}`, type-checking every field, stored in
+   `coordinator.data[server_id]`.
 3. Entities only read `coordinator.data`. A server missing from `data` is shown as unavailable.
-4. Turning the switch on or off calls `POST /servers/{id}/action/start_server` or `stop_server`, then updates the state optimistically; the next poll confirms it.
+4. Turning the switch on or off calls `POST /servers/{id}/action/start_server` or `stop_server`, then asks the
+   coordinator to refresh from Crafty. Meanwhile the switch shows the state asked for, until Crafty reports it or a
+   minute passes (`PENDING_STATE_SECONDS`), so it doesn't flick back while the server starts or stops.
+
+`api.request` is strict about what it accepts: it never follows redirects (so the token only goes to the configured
+address), reads at most 1 MiB, and needs `{"status": "ok", ...}`. Anything else is one of the `ERRORS`.
 
 Crafty API endpoints used (API v2, [spec](https://docs.craftycontrol.com/pages/developer-guide/api-reference/v2/)):
 
@@ -45,6 +53,8 @@ Crafty API endpoints used (API v2, [spec](https://docs.craftycontrol.com/pages/d
 ## Conventions
 
 - **Unique IDs are permanent.** `_key` on each entity class (`power`, `status`) feeds the unique ID. Changing it orphans users' existing entities.
+- **Never trust a reply's shape.** Check the type of anything read from Crafty before using it, and build server paths
+  with `server_path()` only.
 - **One error path.** Network and API problems all surface as the `ERRORS` tuple in `const.py`. Catch that tuple, not individual exceptions.
 - **Keep it minimal.** The goal is a small integration: on/off, status, port, name. Think twice before adding more.
 - Keep comments and docstrings current; the code is meant to be readable by someone new.
@@ -52,7 +62,7 @@ Crafty API endpoints used (API v2, [spec](https://docs.craftycontrol.com/pages/d
 ## Checking a change
 
 ```
-pip install ruff
+pip install ruff==0.17.6
 ruff check && ruff format --check
 python3 tests/test_integration.py
 python3 tests/test_release.py
@@ -66,7 +76,7 @@ runs all of these on every push (`.gitea/workflows/test.yml`); on GitHub the sam
 `hassfest` and the Marketplace's own checks, which come from GitHub and can only run there.
 [tests/README.md](tests/README.md) lists what each test checks.
 
-The simulation loads the real integration files against stand-ins for Home Assistant, aiohttp and probatio, and a mock Crafty server that returns messy data (missing fields, 403s, HTML pages, hangs, removed and added servers, failed actions) and checks the entities and config flow behave. It exits non-zero if any check fails.
+The simulation loads the real integration files against stand-ins for Home Assistant, aiohttp and probatio, and a mock Crafty server that returns messy data (missing fields, odd types, invalid server IDs, 403s, HTML pages, redirects, oversized replies, hangs, removed and added servers, failed actions) and checks the entities and the set-up, reconfigure and reauth flows behave. It exits non-zero if any check fails.
 
 It does **not** test real Home Assistant, real HTTP/TLS, or a real Crafty. Always try changes on a real instance too.
 
@@ -159,17 +169,28 @@ installs from GitHub's releases, so every link in the docs and release notes poi
    itself: the mirror deletes tags Gitea doesn't have, and GitHub follows Gitea on its own.
 
 The Gitea workflows use no actions (`actions/checkout` and the like download from GitHub): each job runs in a plain
-image from Docker Hub (`python:3.14-bookworm`) and fetches the code from Gitea with git, so testing and releasing
-keep working when GitHub can't be reached. Only `ruff` comes from PyPI. When the runner's jobs can't reach Gitea at
+image from Docker Hub (`python:3.14-bookworm`, pinned by digest) and fetches the code from Gitea with git, so testing
+and releasing keep working when GitHub can't be reached. Only `ruff` comes from PyPI, at a pinned version. When the runner's jobs can't reach Gitea at
 its public address (a runner on the same Docker network as Gitea, say), set an Actions variable `GITEA_INTERNAL_URL`
 to the address they can reach (`http://gitea-server:3000`); both workflows and the publish script use it.
+
+### Workflow security
+
+- **Everything is pinned.** GitHub actions are pinned to a commit SHA (the version is in the comment beside it), the
+  Gitea jobs' image to a digest, and `ruff` to a version (the same one everywhere). Update them on purpose, in a
+  `chore:` commit: look up the new commit or digest, and run the checks.
+- **Tokens can do as little as possible.** Every workflow is read-only by default; only the job that publishes a
+  release may write. On Gitea the job token reaches git through its environment for the fetch alone, and the release
+  token (`RELEASE_TOKEN`, falling back to the job's own) is given only to the step that publishes. Gitea versions that
+  don't support workflow `permissions` ignore them: there, set the repository's default Actions token permissions to
+  read-only and give `RELEASE_TOKEN` only what making releases needs.
+- GitHub's checkouts don't keep the token (`persist-credentials: false`); the release job uses `GH_TOKEN` for `gh` only.
 
 Keep every tag on Gitea: the push mirror makes GitHub's tags match Gitea's, so a tag missing from Gitea is deleted on
 GitHub, and the GitHub release on it turns into a draft.
 
 ## Known limitations / ideas
 
-- No reconfigure or re-auth flow: to change the URL or token, remove and re-add the integration.
 - A server renamed in Crafty keeps its old device name in Home Assistant until the device is renamed there.
 - The smallest set of Crafty API-key permissions that works has not been pinned down; see the [Configuration](docs/Configuration.md) page.
 

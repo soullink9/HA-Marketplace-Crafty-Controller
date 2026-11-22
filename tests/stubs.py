@@ -2,7 +2,8 @@
 
 Importing this module registers them under the real names and puts custom_components/ on the path, so
 `import crafty_controller` loads the real integration. The aiohttp stand-in makes real plain-HTTP requests, which is
-how the test's mock Crafty server is reached; anything but http:// fails like a TLS handshake would. Keep the
+how the test's mock Crafty server is reached; anything but http:// fails like a TLS handshake would. Like aiohttp, it
+follows redirects unless told not to (allow_redirects=False). Keep the
 stand-ins in sync if the integration starts using more of the Home Assistant API.
 """
 
@@ -13,7 +14,7 @@ import os
 import sys
 import types
 from typing import Generic, TypeVar
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 # Locate the integration relative to this file so the script runs from anywhere.
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "custom_components")
@@ -38,9 +39,21 @@ class ClientTimeout:
         self.total = total
 
 
+class _Content:
+    """resp.content: the body, read in chunks."""
+
+    def __init__(self, body):
+        self.body = body
+
+    async def iter_chunked(self, size):
+        for start in range(0, len(self.body), size):
+            yield self.body[start : start + size]
+
+
 class _Resp:
-    def __init__(self, status, body):
-        self.status, self.body = status, body
+    def __init__(self, status, body, headers):
+        self.status, self.body, self.headers = status, body, headers
+        self.content = _Content(body)
 
     def raise_for_status(self):
         if self.status >= 400:
@@ -68,26 +81,37 @@ async def _fetch(method, url, headers):
     raw = await reader.read()
     writer.close()
     head, _, body = raw.partition(b"\r\n\r\n")
-    return _Resp(int(head.split(b" ", 2)[1]), body)
+    lines = head.decode().split("\r\n")
+    response_headers = {k.strip().lower(): v.strip() for k, _, v in (line.partition(":") for line in lines[1:])}
+    return _Resp(int(lines[0].split(" ", 2)[1]), body, response_headers)
 
 
 class _Req:
     """What session.request() returns: an async context manager that applies the timeout like aiohttp does."""
 
-    def __init__(self, method, url, headers, timeout):
+    def __init__(self, method, url, headers, timeout, allow_redirects):
         self.args = (method, url, headers)
-        self.timeout = timeout
+        self.timeout, self.allow_redirects = timeout, allow_redirects
+
+    async def _run(self):
+        method, url, headers = self.args
+        for _ in range(10):
+            resp = await _fetch(method, url, headers)
+            if not (self.allow_redirects and resp.status in (301, 302, 303, 307, 308)):
+                return resp
+            url = urljoin(url, resp.headers["location"])  # aiohttp's default: follow it
+        raise ClientError("too many redirects")
 
     async def __aenter__(self):
-        return await asyncio.wait_for(_fetch(*self.args), self.timeout.total if self.timeout else None)
+        return await asyncio.wait_for(self._run(), self.timeout.total if self.timeout else None)
 
     async def __aexit__(self, *exc_info):
         return False
 
 
 class ClientSession:
-    def request(self, method, url, headers=None, timeout=None):
-        return _Req(method, url, headers or {}, timeout)
+    def request(self, method, url, headers=None, timeout=None, allow_redirects=True):
+        return _Req(method, url, headers or {}, timeout, allow_redirects)
 
     def get(self, url, **kw):
         return self.request("GET", url, **kw)
@@ -141,9 +165,14 @@ class ConfigEntryNotReady(Exception):
     pass
 
 
+class ConfigEntryAuthFailed(Exception):
+    pass
+
+
 class ConfigEntry(Generic[T]):
-    def __init__(self, data):
-        self.data, self.runtime_data, self._un = data, None, []
+    def __init__(self, data, entry_id="entry1"):
+        self.data, self.runtime_data, self._un, self.entry_id = data, None, [], entry_id
+        self.reauth_started = 0
 
     def async_on_unload(self, fn):
         self._un.append(fn)
@@ -153,19 +182,44 @@ class ConfigFlow:
     def __init_subclass__(cls, domain=None, **kw):
         cls.domain = domain
 
+    # Tests set `entry` (the entry being reconfigured or reauthenticated) and `entries` (every entry).
+    entry, entries, source = None, (), "user"
+
     def _async_abort_entries_match(self, match):
         pass
 
-    def async_show_form(self, step_id, data_schema, errors=None):
-        return {"type": "form", "errors": errors or {}}
+    def _async_current_entries(self, include_ignore=True):
+        return list(self.entries)
+
+    def _get_reconfigure_entry(self):
+        return self.entry
+
+    def _get_reauth_entry(self):
+        return self.entry
+
+    def async_show_form(self, step_id, data_schema, errors=None, description_placeholders=None):
+        return {"type": "form", "step_id": step_id, "errors": errors or {}, "schema": data_schema}
 
     def async_create_entry(self, title, data):
         return {"type": "create_entry", "data": data}
+
+    def async_abort(self, reason):
+        return {"type": "abort", "reason": reason}
+
+    def async_update_reload_and_abort(self, entry, data_updates):
+        entry.data = {**entry.data, **data_updates}
+        reason = "reauth_successful" if self.source == "reauth" else "reconfigure_successful"
+        return {"type": "abort", "reason": reason}
 
 
 class DataUpdateCoordinator(Generic[T]):
     def __init__(self, hass, logger, *, name, config_entry=None, update_interval=None):
         self.data, self.last_update_success, self._l, self.unexpected = None, True, [], []
+        self.config_entry, self.refresh_requests = config_entry, 0
+
+    async def async_request_refresh(self):
+        self.refresh_requests += 1
+        await self.async_refresh()
 
     async def async_refresh(self):
         try:
@@ -173,6 +227,9 @@ class DataUpdateCoordinator(Generic[T]):
             self.last_update_success = True
         except UpdateFailed:
             self.last_update_success = False
+        except ConfigEntryAuthFailed:
+            self.last_update_success = False
+            self.config_entry.reauth_started += 1  # real HA starts the reauth flow
         except Exception as err:
             self.unexpected.append(err)
             self.last_update_success = False  # real HA logs these as bugs
@@ -218,7 +275,9 @@ fake_module("homeassistant.helpers")
 fake_module("homeassistant.config_entries", ConfigEntry=ConfigEntry, ConfigFlow=ConfigFlow)
 fake_module("homeassistant.const", CONF_TOKEN="token", CONF_URL="url", CONF_VERIFY_SSL="verify_ssl", Platform=Platform)
 fake_module("homeassistant.core", HomeAssistant=object, callback=lambda f: f)
-fake_module("homeassistant.exceptions", HomeAssistantError=HomeAssistantError)
+fake_module(
+    "homeassistant.exceptions", HomeAssistantError=HomeAssistantError, ConfigEntryAuthFailed=ConfigEntryAuthFailed
+)
 fake_module("homeassistant.helpers.aiohttp_client", async_get_clientsession=lambda hass, v=True: ClientSession())
 fake_module("homeassistant.helpers.device_registry", DeviceInfo=dict)
 fake_module(

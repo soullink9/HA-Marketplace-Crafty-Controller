@@ -5,12 +5,30 @@
         "title": "Crafty Controller",
         "description": "Enter the address of your Crafty Controller and an API token created in your Crafty user settings.",
         "data": {
-          "url": "URL (e.g. https://192.168.1.10:8443)",
+          "url": "URL (e.g. https://crafty.example.com:8443)",
           "token": "API token",
           "verify_ssl": "Verify SSL certificate"
         },
         "data_description": {
-          "verify_ssl": "Leave off if Crafty uses its default self-signed certificate."
+          "verify_ssl": "Keep this on when Crafty has a certificate Home Assistant trusts. Turn it off only for Crafty's default self-signed certificate: the connection is still encrypted, but Home Assistant can't tell it's really talking to your Crafty, so the API token could be sent to an impostor on your network."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Crafty Controller",
+        "description": "Change the address of your Crafty Controller or the certificate check. The API token stays the same.",
+        "data": {
+          "url": "URL (e.g. https://crafty.example.com:8443)",
+          "verify_ssl": "Verify SSL certificate"
+        },
+        "data_description": {
+          "verify_ssl": "Keep this on when Crafty has a certificate Home Assistant trusts. Turn it off only for Crafty's default self-signed certificate: the connection is still encrypted, but Home Assistant can't tell it's really talking to your Crafty, so the API token could be sent to an impostor on your network."
+        }
+      },
+      "reauth_confirm": {
+        "title": "New Crafty API token",
+        "description": "Crafty at {url} rejected the API token. Create a new API token in your Crafty user settings and enter it here.",
+        "data": {
+          "token": "API token"
         }
       }
     },
@@ -19,7 +37,9 @@
       "invalid_auth": "Crafty rejected the API token"
     },
     "abort": {
-      "already_configured": "This Crafty Controller is already configured"
+      "already_configured": "This Crafty Controller is already configured",
+      "reauth_successful": "The new API token works. Crafty Controller is set up again.",
+      "reconfigure_successful": "Crafty Controller now uses the new settings."
     }
   }
 }

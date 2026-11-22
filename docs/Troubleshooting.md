@@ -18,16 +18,23 @@ If the reply is `{"status":"ok","data":[]}`, the token can't see any servers: cr
 
 - Check the URL and port, and that Home Assistant can reach that machine (firewall, Docker networking).
 - Use the address Crafty's web interface uses, including `https://` and the port.
-- If Crafty uses a self-signed certificate, leave **Verify SSL certificate** off.
+- If Crafty uses its default self-signed certificate, turn **Verify SSL certificate** off (see
+  [Configuration](Configuration.md#verify-ssl-certificate) for what that means). With it on, the certificate must be
+  one Home Assistant trusts and must match the host name in the URL.
+- Redirects aren't followed: use the address Crafty ends up on (for example `https://` instead of `http://`).
 - The reply must come from Crafty's API; a login page or a reverse-proxy error page is rejected.
 
 ## "Crafty rejected the API token"
 
-The token is wrong, revoked, or doesn't have API access. Create a new one in Crafty and add the integration again.
+The token is wrong, revoked, or doesn't have API access. Create a new one in Crafty and enter it. If the integration
+is already set up, Home Assistant asks for the new token itself (see
+[Configuration](Configuration.md#a-new-api-token)).
 
 ## Everything is `unavailable`
 
-Crafty is unreachable or the token no longer works. Check Crafty is running and the token still exists. The entities recover on their own once Crafty answers.
+Crafty is unreachable or the token no longer works. Check Crafty is running. If the token no longer works, Home
+Assistant shows a **Reauthenticate** notice under **Settings → Devices & services**: enter a new token there. The
+entities recover on their own once Crafty answers.
 
 ## One server is `unavailable`
 

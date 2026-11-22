@@ -10,7 +10,7 @@ python3 tests/test_release.py
 
 | Script | What it checks |
 |---|---|
-| `test_integration.py` | Simulation test for the Crafty Controller integration |
+| `test_integration.py` | Simulation test for the Crafty Controller integration: entities, odd and hostile replies (wrong types, invalid server IDs, redirects, oversized bodies), the stats request limit, start/stop, and the set-up, reconfigure and reauth flows |
 | `test_release.py` | The release scripts in `scripts/`: the version check and notes, building and checking the zip, publishing to a fake Gitea server, and working out which releases GitHub still needs |
 
 [CONTRIBUTING.md](../CONTRIBUTING.md#checking-a-change) says which to run for which change, and how long each takes.

@@ -30,7 +30,7 @@ To install by hand instead, follow the steps below.
 2. Fill in the form (see [Configuration](Configuration.md)):
    - **URL** of your Crafty, for example `https://192.168.1.10:8443`
    - **API token**
-   - **Verify SSL certificate**
+   - **Verify SSL certificate** (on by default; turn it off only for Crafty's own self-signed certificate)
 3. When it connects, every Minecraft server in Crafty appears as a device.
 
 Nothing showing up, or an error on the form? See [Troubleshooting](Troubleshooting.md).
