@@ -24,6 +24,12 @@ on:
         description: "Version to release, without the v (for example 1.2.1)"
         required: true
 
+# Read-only by default; only the release job may write, and only its last step gets the release token.
+# (Gitea versions without workflow permissions ignore this: then set a RELEASE_TOKEN secret that can only make
+# releases, and the repository's default token permissions to read-only.)
+permissions:
+  contents: read
+
 env:
   PUBLIC_REPOSITORY: soullink9/HA-Marketplace-Crafty-Controller
   # Gitea's address as the job containers can reach it, if that isn't its public address (ROOT_URL): for a runner
@@ -35,23 +41,30 @@ jobs:
     # Home Assistant 2026.11 runs on Python 3.14, the only version this integration supports, so that's what the tests run on
     runs-on: ubuntu-latest
     container:
-      image: python:3.14-bookworm
+      # Pinned by digest, so a changed image can't slip into a run. To update: docker pull python:3.14-bookworm, then
+      # take the digest from docker inspect --format '{{index .RepoDigests 0}}' python:3.14-bookworm.
+      image: python:3.14-bookworm@sha256:3fe825da0a80fa8e2cd79baadeb76b03c0ddf3d6cdbc8346778a0208b9d6038c
     steps:
       - name: Get the code
         env:
           TOKEN: ${{ secrets.GITEA_TOKEN }}
         run: |
           git init -q .
-          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
           repo="${GITEA_INTERNAL_URL:-$GITHUB_SERVER_URL}/$GITHUB_REPOSITORY.git"
+          # The token goes to git through its environment, for these fetches only: not on a command line (which any
+          # process can read) and not saved in .git/config, so nothing that runs later in the job can find it there.
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+          fetch() {
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.extraHeader GIT_CONFIG_VALUE_0="Authorization: Basic $auth" \
+              git fetch -q --depth 1 "$repo" "$1"
+          }
           # the exact commit that started the run; its branch or pull request as a fallback
-          git -c http.extraHeader="Authorization: Basic $auth" fetch -q --depth 1 "$repo" "$GITHUB_SHA" ||
-            git -c http.extraHeader="Authorization: Basic $auth" fetch -q --depth 1 "$repo" "$GITHUB_REF"
+          fetch "$GITHUB_SHA" || fetch "$GITHUB_REF"
           git checkout -q FETCH_HEAD
           git log -1 --format='Testing %h %s'
 
       - name: Install what the checks need (from PyPI)
-        run: pip install --no-cache-dir ruff
+        run: pip install --no-cache-dir ruff==0.17.6
 
       - name: Lint and format (ruff)
         run: ruff check && ruff format --check
@@ -67,19 +80,28 @@ jobs:
   release:
     needs: tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # to publish the release
     container:
-      image: python:3.14-bookworm
+      # Pinned by digest, so a changed image can't slip into a run. To update: docker pull python:3.14-bookworm, then
+      # take the digest from docker inspect --format '{{index .RepoDigests 0}}' python:3.14-bookworm.
+      image: python:3.14-bookworm@sha256:3fe825da0a80fa8e2cd79baadeb76b03c0ddf3d6cdbc8346778a0208b9d6038c
     steps:
       - name: Get the code
         env:
           TOKEN: ${{ secrets.GITEA_TOKEN }}
         run: |
           git init -q .
-          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
           repo="${GITEA_INTERNAL_URL:-$GITHUB_SERVER_URL}/$GITHUB_REPOSITORY.git"
+          # The token goes to git through its environment, for these fetches only: not on a command line (which any
+          # process can read) and not saved in .git/config, so nothing that runs later in the job can find it there.
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+          fetch() {
+            GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.extraHeader GIT_CONFIG_VALUE_0="Authorization: Basic $auth" \
+              git fetch -q --depth 1 "$repo" "$1"
+          }
           # the exact commit that started the run; its branch or pull request as a fallback
-          git -c http.extraHeader="Authorization: Basic $auth" fetch -q --depth 1 "$repo" "$GITHUB_SHA" ||
-            git -c http.extraHeader="Authorization: Basic $auth" fetch -q --depth 1 "$repo" "$GITHUB_REF"
+          fetch "$GITHUB_SHA" || fetch "$GITHUB_REF"
           git checkout -q FETCH_HEAD
           git log -1 --format='Releasing %h %s'
 
