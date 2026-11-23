@@ -16,7 +16,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import probatio
 
 from .api import request
-from .const import DOMAIN, ERRORS
+from .const import DOMAIN, ERRORS, EXAMPLE_URL
 
 
 def _tidy_url(url: str) -> str:
@@ -70,6 +70,7 @@ class CraftyFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="user",
             errors=errors,
+            description_placeholders={"example_url": EXAMPLE_URL},
             data_schema=probatio.Schema(
                 {
                     probatio.Required(CONF_URL): str,
@@ -104,6 +105,7 @@ class CraftyFlow(ConfigFlow, domain=DOMAIN):
         return self.async_show_form(
             step_id="reconfigure",
             errors=errors,
+            description_placeholders={"example_url": EXAMPLE_URL},
             data_schema=probatio.Schema(
                 {
                     probatio.Required(CONF_URL, default=entry.data[CONF_URL]): str,

@@ -5,11 +5,12 @@
         "title": "Crafty Controller",
         "description": "Enter the address of your Crafty Controller and an API token created in your Crafty user settings.",
         "data": {
-          "url": "URL (e.g. https://crafty.example.com:8443)",
+          "url": "URL",
           "token": "API token",
           "verify_ssl": "Verify SSL certificate"
         },
         "data_description": {
+          "url": "The address of Crafty's web interface, including the port, for example {example_url}.",
           "verify_ssl": "Keep this on when Crafty has a certificate Home Assistant trusts. Turn it off only for Crafty's default self-signed certificate: the connection is still encrypted, but Home Assistant can't tell it's really talking to your Crafty, so the API token could be sent to an impostor on your network."
         }
       },
@@ -17,10 +18,11 @@
         "title": "Reconfigure Crafty Controller",
         "description": "Change the address of your Crafty Controller or the certificate check. The API token stays the same.",
         "data": {
-          "url": "URL (e.g. https://crafty.example.com:8443)",
+          "url": "URL",
           "verify_ssl": "Verify SSL certificate"
         },
         "data_description": {
+          "url": "The address of Crafty's web interface, including the port, for example {example_url}.",
           "verify_ssl": "Keep this on when Crafty has a certificate Home Assistant trusts. Turn it off only for Crafty's default self-signed certificate: the connection is still encrypted, but Home Assistant can't tell it's really talking to your Crafty, so the API token could be sent to an impostor on your network."
         }
       },

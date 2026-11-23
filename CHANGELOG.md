@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.1 (2026-11-23)
+
+- Fixes Home Assistant's integration check (hassfest), which failed on 1.4.0 because the set-up forms had an example
+  URL in their translations. The example is now passed in as a placeholder and shown under the URL field. No other
+  changes.
+
 ## 1.4.0 (2026-11-22)
 
 Hardening after a security review.

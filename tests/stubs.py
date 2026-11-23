@@ -198,7 +198,13 @@ class ConfigFlow:
         return self.entry
 
     def async_show_form(self, step_id, data_schema, errors=None, description_placeholders=None):
-        return {"type": "form", "step_id": step_id, "errors": errors or {}, "schema": data_schema}
+        return {
+            "type": "form",
+            "step_id": step_id,
+            "errors": errors or {},
+            "schema": data_schema,
+            "placeholders": description_placeholders or {},
+        }
 
     def async_create_entry(self, title, data):
         return {"type": "create_entry", "data": data}

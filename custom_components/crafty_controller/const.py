@@ -12,6 +12,10 @@ DOMAIN = "crafty_controller"
 # The entity platforms this integration provides (see switch.py / binary_sensor.py).
 PLATFORMS = [Platform.SWITCH, Platform.BINARY_SENSOR]
 
+# The example address the set-up forms show. Home Assistant doesn't allow URLs in translation strings, so it's
+# passed in as a description placeholder.
+EXAMPLE_URL = "https://crafty.example.com:8443"
+
 # How often Crafty is polled for the state of every server.
 UPDATE_INTERVAL = timedelta(seconds=30)
 

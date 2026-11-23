@@ -239,6 +239,17 @@ async def main():
             <= set(translations["config"]["abort"])
         )
         check("layout: py compiles, manifest + translations valid and match flow keys", manifest_ok and translations_ok)
+
+        def strings(node):
+            """Every string in the translations, however deep."""
+            if isinstance(node, dict):
+                for value in node.values():
+                    yield from strings(value)
+            else:
+                yield node
+
+        with_urls = [text for text in strings(translations) if "://" in text]
+        check("layout: no URLs in translation strings (hassfest refuses them)", not with_urls, with_urls)
     except Exception as err:
         check("layout: compile/json", False, repr(err))
 
@@ -470,6 +481,11 @@ async def main():
     form = await new_flow().async_step_user()
     defaults = {field.schema: field.default for field in form["schema"].schema}
     check("S7 form: Verify SSL certificate is on by default", defaults.get("verify_ssl") is True, defaults)
+    check(
+        "S7 form: the example URL is given as a placeholder",
+        form["placeholders"] == {"example_url": "https://crafty.example.com:8443"},
+        form["placeholders"],
+    )
 
     result = await flow(f"  {url}/  ", " GOOD ")
     check(
@@ -526,6 +542,7 @@ async def main():
         defaults == {"url": "http://127.0.0.1:1", "verify_ssl": True},
         defaults,
     )
+    check("S7c reconfigure form gets the example URL placeholder", "example_url" in result["placeholders"])
     result = await reconfigure.async_step_reconfigure({"url": "http://other:8443/", "verify_ssl": True})
     check("S7c reconfigure to another entry's URL -> already_configured", result["reason"] == "already_configured")
     result = await reconfigure.async_step_reconfigure({"url": "http://127.0.0.1:2", "verify_ssl": False})
