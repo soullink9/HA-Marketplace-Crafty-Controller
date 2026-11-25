@@ -169,7 +169,7 @@ installs from GitHub's releases, so every link in the docs and release notes poi
    itself: the mirror deletes tags Gitea doesn't have, and GitHub follows Gitea on its own.
 
 The Gitea workflows use no actions (`actions/checkout` and the like download from GitHub): each job runs in a plain
-image from Docker Hub (`python:3.14-bookworm`, pinned by digest) and fetches the code from Gitea with git, so testing
+image from Docker Hub (`python:3.14-trixie`, pinned by digest) and fetches the code from Gitea with git, so testing
 and releasing keep working when GitHub can't be reached. Only `ruff` comes from PyPI, at a pinned version. When the runner's jobs can't reach Gitea at
 its public address (a runner on the same Docker network as Gitea, say), set an Actions variable `GITEA_INTERNAL_URL`
 to the address they can reach (`http://gitea-server:3000`); both workflows and the publish script use it.

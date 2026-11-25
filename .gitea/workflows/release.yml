@@ -41,9 +41,9 @@ jobs:
     # Home Assistant 2026.11 runs on Python 3.14, the only version this integration supports, so that's what the tests run on
     runs-on: ubuntu-latest
     container:
-      # Pinned by digest, so a changed image can't slip into a run. To update: docker pull python:3.14-bookworm, then
-      # take the digest from docker inspect --format '{{index .RepoDigests 0}}' python:3.14-bookworm.
-      image: python:3.14-bookworm@sha256:3fe825da0a80fa8e2cd79baadeb76b03c0ddf3d6cdbc8346778a0208b9d6038c
+      # Pinned by digest, so a changed image can't slip into a run. To update: docker pull python:3.14-trixie, then
+      # take the digest from docker inspect --format '{{index .RepoDigests 0}}' python:3.14-trixie.
+      image: python:3.14-trixie@sha256:40bc16b613d4d54b03d301542b3123b855b167a66436bfdc91004e46d3a64043
     steps:
       - name: Get the code
         env:
@@ -83,9 +83,9 @@ jobs:
     permissions:
       contents: write # to publish the release
     container:
-      # Pinned by digest, so a changed image can't slip into a run. To update: docker pull python:3.14-bookworm, then
-      # take the digest from docker inspect --format '{{index .RepoDigests 0}}' python:3.14-bookworm.
-      image: python:3.14-bookworm@sha256:3fe825da0a80fa8e2cd79baadeb76b03c0ddf3d6cdbc8346778a0208b9d6038c
+      # Pinned by digest, so a changed image can't slip into a run. To update: docker pull python:3.14-trixie, then
+      # take the digest from docker inspect --format '{{index .RepoDigests 0}}' python:3.14-trixie.
+      image: python:3.14-trixie@sha256:40bc16b613d4d54b03d301542b3123b855b167a66436bfdc91004e46d3a64043
     steps:
       - name: Get the code
         env:

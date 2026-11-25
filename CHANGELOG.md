@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.2 (2026-11-25)
+
+Dependencies brought up to date. The integration itself is unchanged: it has no Python requirements of its own, and
+still needs Home Assistant 2026.11 or newer.
+
+### Repository
+
+- GitHub workflows: `actions/checkout` 5.1.0 → 7.0.1, `actions/setup-python` 6.3.0 → 7.1.0, and Home Assistant's
+  hassfest action moved to its latest commit (2026-11-23). Still pinned by commit.
+- Gitea jobs now run in `python:3.14-trixie` (Debian 13, the current stable) instead of `python:3.14-bookworm`,
+  pinned to the 2026-11-24 image (Python 3.14.10).
+- `ruff` 0.17.6 and the HACS action were already the latest and are unchanged.
+
 ## 1.4.1 (2026-11-23)
 
 - Fixes Home Assistant's integration check (hassfest), which failed on 1.4.0 because the set-up forms had an example
