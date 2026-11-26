@@ -2,6 +2,10 @@
 # Everything here except hassfest can also be run locally; see CONTRIBUTING.md.
 # Every action is pinned to a commit (the version is in the comment beside it), so a moved tag or branch can't
 # change what runs here.
+#
+# The code is fetched with plain git, not actions/checkout: on pull requests to a public repository, checkout can
+# report a "stale merge" back to GitHub (its own telemetry, with no switch to turn it off), and this project allows no
+# telemetry. The token reaches git through its environment for the fetch alone and is never saved in .git/config.
 name: CI
 
 on:
@@ -14,14 +18,24 @@ on:
 permissions:
   contents: read
 
+env:
+  DO_NOT_TRACK: "1" # no telemetry from any tool that honours it
+
 jobs:
   lint:
     name: Lint and format (ruff)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
+      - name: Get the code
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.extraHeader GIT_CONFIG_VALUE_0="Authorization: Basic $auth" \
+            git fetch -q --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" "$GITHUB_SHA"
+          git checkout -q FETCH_HEAD
+          git log -1 --format='Testing %h %s'
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"
@@ -33,18 +47,32 @@ jobs:
     name: Home Assistant's integration checks (hassfest)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
+      - name: Get the code
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.extraHeader GIT_CONFIG_VALUE_0="Authorization: Basic $auth" \
+            git fetch -q --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" "$GITHUB_SHA"
+          git checkout -q FETCH_HEAD
+          git log -1 --format='Testing %h %s'
       - uses: home-assistant/actions/hassfest@9e9565e68f5a70d874202871f4c4064d23814235 # master, 2026-11-23
 
   tests:
     name: Tests (simulation)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
+      - name: Get the code
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.extraHeader GIT_CONFIG_VALUE_0="Authorization: Basic $auth" \
+            git fetch -q --depth 1 "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" "$GITHUB_SHA"
+          git checkout -q FETCH_HEAD
+          git log -1 --format='Testing %h %s'
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"

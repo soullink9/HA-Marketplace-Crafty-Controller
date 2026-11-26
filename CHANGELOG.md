@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.3 (2026-11-26)
+
+No telemetry anywhere. The integration itself is unchanged: it never sent any, and only talks to the Crafty address
+you enter.
+
+### Repository
+
+- GitHub's release workflow turns off the GitHub CLI's usage telemetry (`GH_TELEMETRY=false`), which `gh` sends by
+  default, and every tool-running GitHub workflow sets `DO_NOT_TRACK=1`.
+- GitHub's CI fetches the code with plain git instead of `actions/checkout`, which on pull requests can send a
+  diagnostic report to GitHub that can't be turned off.
+- CONTRIBUTING.md now states the rule: no telemetry, analytics or phone-home code, from the code, dependencies or CI.
+
 ## 1.4.2 (2026-11-25)
 
 Dependencies brought up to date. The integration itself is unchanged: it has no Python requirements of its own, and

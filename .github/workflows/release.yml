@@ -23,6 +23,12 @@ on:
 permissions:
   contents: read
 
+# No telemetry from the tools this runs: the GitHub CLI (gh) sends usage telemetry unless told not to, and the
+# runner's gh is always the latest. GH_TELEMETRY is gh's own switch; DO_NOT_TRACK is the common one other tools follow.
+env:
+  GH_TELEMETRY: "false"
+  DO_NOT_TRACK: "1"
+
 # One run at a time: a mirror push that moves main and brings a tag starts this twice, and the second run then
 # finds the release already published instead of racing the first to create it.
 concurrency:

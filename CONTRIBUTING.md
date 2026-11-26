@@ -184,7 +184,20 @@ to the address they can reach (`http://gitea-server:3000`); both workflows and t
   token (`RELEASE_TOKEN`, falling back to the job's own) is given only to the step that publishes. Gitea versions that
   don't support workflow `permissions` ignore them: there, set the repository's default Actions token permissions to
   read-only and give `RELEASE_TOKEN` only what making releases needs.
-- GitHub's checkouts don't keep the token (`persist-credentials: false`); the release job uses `GH_TOKEN` for `gh` only.
+- GitHub's checkouts don't keep the token (`persist-credentials: false`, or a plain `git fetch` in `ci.yml` that never
+  saves it); the release job uses `GH_TOKEN` for `gh` only.
+
+### No telemetry
+
+Nothing in this repository may send telemetry, analytics, usage or crash reports, or otherwise phone home: not the
+integration (it only ever talks to the Crafty address the user enters), not a dependency, and not CI. When adding or
+updating a tool or action, check whether it reports anything, and switch it off or don't use it:
+
+- `gh` sends usage telemetry by default, so `.github/workflows/release.yml` sets `GH_TELEMETRY=false`. Every GitHub
+  workflow that runs tools also sets `DO_NOT_TRACK=1`.
+- `actions/checkout` can report a "stale merge" to GitHub on pull requests, with no way to turn it off, so `ci.yml`
+  (the only workflow that runs on pull requests) fetches the code with plain git instead. The release workflow never
+  runs on pull requests, where that report can't happen, so it keeps `actions/checkout`.
 
 Keep every tag on Gitea: the push mirror makes GitHub's tags match Gitea's, so a tag missing from Gitea is deleted on
 GitHub, and the GitHub release on it turns into a draft.
